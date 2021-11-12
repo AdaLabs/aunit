@@ -45,6 +45,7 @@ package AUnit.Test_Results is
       Message     : Message_String;
       Source_Name : Message_String;
       Line        : Natural;
+      Traceback   : Message_String;
    end record;
    type Test_Failure_Access is access all Test_Failure;
    pragma No_Strict_Aliasing (Test_Failure_Access);

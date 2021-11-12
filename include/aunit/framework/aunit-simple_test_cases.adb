@@ -103,9 +103,7 @@ package body AUnit.Simple_Test_Cases is
          Start_Test (R, 1);
 
          --  Run test routine
-         Set_Up (Test_Case'Class (Test.all));
          Run_Routine (Test, Options, R, Outcome);
-         Tear_Down (Test_Case'Class (Test.all));
          AUnit.Assertions.Set_Current_Test (Old);
       end if;
    end Run;

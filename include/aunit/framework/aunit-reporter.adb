@@ -38,4 +38,11 @@ package body AUnit.Reporter is
       Engine.File := Value;
    end Set_File;
 
+   function Get_File
+     (Engine : in  Reporter) return AUnit.IO.File_Access
+   is
+   begin
+      return Engine.File;
+   end Get_File;
+
 end AUnit.Reporter;

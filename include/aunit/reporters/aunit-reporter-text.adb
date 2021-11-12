@@ -203,7 +203,7 @@ package body AUnit.Reporter.Text is
 
          Put (File, "Cumulative Time: ");
          Put_Measure (File, T);
-         Put_Line (File, " seconds");
+         New_Line (File);
       end if;
    end Report;
 

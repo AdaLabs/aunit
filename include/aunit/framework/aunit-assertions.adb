@@ -52,6 +52,66 @@ package body AUnit.Assertions is
    ------------
 
    procedure Assert
+     (T         : Test;
+      Condition : Boolean;
+      Message   : String;
+      Source    : String := GNAT.Source_Info.File;
+      Line      : Natural := GNAT.Source_Info.Line)
+   is
+   begin
+      if not Assert (T, Condition, Message, Source, Line) then
+         raise Assertion_Error;
+      end if;
+   end Assert;
+
+   ------------
+   -- Assert --
+   ------------
+
+   function Assert
+     (T         : Test;
+      Condition : Boolean;
+      Message   : String;
+      Source    : String := GNAT.Source_Info.File;
+      Line      : Natural := GNAT.Source_Info.Line) return Boolean
+   is
+   begin
+      if not Condition then
+         Failure_Lists.Append
+           (Failures,
+            (Failure => (Format (Message), Format (Source), Line, null),
+             Id      => T.Id));
+      end if;
+
+      return Condition;
+   end Assert;
+
+   ------------
+   -- Assert --
+   ------------
+
+   procedure Assert
+     (T         : Test;
+      Actual    : String;
+      Expected  : String;
+      Message   : String;
+      Source    : String  := GNAT.Source_Info.File;
+      Line      : Natural := GNAT.Source_Info.Line) is
+   begin
+      if Actual /= Expected then
+         Assert
+           (T, False,
+            Message & " - got '" & Actual & "', expecting '" & Expected & "'",
+            Source,
+            Line);
+      end if;
+   end Assert;
+
+   ------------
+   -- Assert --
+   ------------
+
+   procedure Assert
      (Condition : Boolean;
       Message   : String;
       Source    : String := GNAT.Source_Info.File;
@@ -75,7 +135,7 @@ package body AUnit.Assertions is
       if not Condition then
          Failure_Lists.Append
            (Failures,
-            (Failure => (Format (Message), Format (Source), Line),
+            (Failure => (Format (Message), Format (Source), Line, null),
              Id      => The_Current_Test.Id));
       end if;
 
