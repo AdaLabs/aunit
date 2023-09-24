@@ -28,8 +28,12 @@
 -- GNAT is maintained by AdaCore (http://www.adacore.com)                   --
 --                                                                          --
 ------------------------------------------------------------------------------
-
+--  TODO avoid use of Ada.Text_IO.Put_Line
+--
+with AUnit.IO;
 with Ada.Exceptions;          use Ada.Exceptions;
+
+with Ada.Strings.Unbounded;   use Ada.Strings.Unbounded;
 
 with GNAT.Traceback.Symbolic; use GNAT.Traceback.Symbolic;
 
@@ -44,9 +48,11 @@ procedure Run_Routine
    R       : in out Result'Class;
    Outcome :    out Status)
 is
+   File                 :  AUnit.IO.File_Type renames Options.Reporter_IO.all;
    Unexpected_Exception : Boolean := False;
-   Time : Time_Measure.Time := Time_Measure.Null_Time;
-
+   Exception_Occured    : Boolean := False;
+   Time                 : Time_Measure.Time := Time_Measure.Null_Time;
+   Assertion_Traceback  : Unbounded_String := Null_Unbounded_String;
    use Time_Measure;
 
 begin
@@ -55,29 +61,35 @@ begin
 
    Clear_Failures (Test.all);
 
+   if Options.Enable_Test_Separators then
+      AUnit.IO.Put_Line (File, "-------------------  begin " & Test.Name.all & "." & Test.Routine_Name.all);
+   end if;
+
+   if Options.Test_Case_Timer then
+      Start_Measure (Time);
+   end if;
+
+   Set_Up (Test.all);
+
    begin
-      if Options.Test_Case_Timer then
-         Start_Measure (Time);
-      end if;
 
       Run_Test (Test.all);
 
-      if Options.Test_Case_Timer then
-         Stop_Measure (Time);
-      end if;
-
    exception
-      when Assertion_Error =>
+      when E : Assertion_Error =>
          if Options.Test_Case_Timer then
             Stop_Measure (Time);
          end if;
+         Assertion_Traceback := To_Unbounded_String (Symbolic_Traceback (E));
+         Exception_Occured   := True;
 
       when E : others =>
          if Options.Test_Case_Timer then
             Stop_Measure (Time);
          end if;
-
+         Exception_Occured    := True;
          Unexpected_Exception := True;
+
          Add_Error
            (R,
             Name (Test.all),
@@ -88,6 +100,15 @@ begin
             Elapsed => Time);
    end;
 
+   Tear_Down (Test.all);
+
+   if not Exception_Occured and then Options.Test_Case_Timer then
+      --  In case of Assertion_Error or Unexpected_Exception,
+      --  the tear_down execution time is not taken into account
+      --
+      Stop_Measure (Time);
+   end if;
+
    if not Unexpected_Exception and then not Has_Failures (Test.all) then
       Outcome := Success;
       Add_Success (R, Name (Test.all), Routine_Name (Test.all), Time);
@@ -97,14 +118,26 @@ begin
          C : Failure_Iter := First_Failure (Test.all);
       begin
          while Has_Failure (C) loop
-            Add_Failure (R,
-                         Name (Test.all),
-                         Routine_Name (Test.all),
-                         Get_Failure (C),
-                         Time);
+            declare
+               Failure : AUnit.Test_Results.Test_Failure := Get_Failure (C);
+            begin
+               if Assertion_Traceback /= Null_Unbounded_String then
+                  Failure.Traceback   := Format (To_String (Assertion_Traceback));
+                  Assertion_Traceback := Null_Unbounded_String;
+               end if;
+               Add_Failure (R,
+                            Name (Test.all),
+                            Routine_Name (Test.all),
+                            Failure,
+                            Time);
+            end;
             Next (C);
          end loop;
       end;
+   end if;
+
+   if Options.Enable_Test_Separators then
+      AUnit.IO.Put_Line (File, "-------------------  end   " & Test.Name.all & "." & Test.Routine_Name.all);
    end if;
 
 end Run_Routine;

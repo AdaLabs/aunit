@@ -29,22 +29,27 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
+with AUnit.IO;
 with AUnit.Test_Filters;
 
 package AUnit.Options is
 
    type AUnit_Options is record
-      Global_Timer     : Boolean := False;
-      Test_Case_Timer  : Boolean := False;
-      Report_Successes : Boolean := True;
-      Filter           : AUnit.Test_Filters.Test_Filter_Access := null;
+      Global_Timer           : Boolean := False;
+      Test_Case_Timer        : Boolean := False;
+      Report_Successes       : Boolean := True;
+      Filter                 : AUnit.Test_Filters.Test_Filter_Access := null;
+      Enable_Test_Separators : Boolean := False;
+      Reporter_IO            : AUnit.IO.File_Access := AUnit.IO.Standard_Output;
    end record;
    --  Options used to determine how a test should be run.
 
    Default_Options : constant AUnit_Options :=
-     (Global_Timer     => False,
-      Test_Case_Timer  => False,
-      Report_Successes => True,
-      Filter           => null);
+                       (Global_Timer           => False,
+                        Test_Case_Timer        => False,
+                        Report_Successes       => True,
+                        Filter                 => null,
+                        Enable_Test_Separators => False,
+                        Reporter_IO            => AUnit.IO.Standard_Output);
 
 end AUnit.Options;

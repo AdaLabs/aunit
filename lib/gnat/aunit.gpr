@@ -1,4 +1,4 @@
-
+with "rts";
 with "aunit_shared";
 
 project AUnit is
@@ -23,6 +23,32 @@ project AUnit is
 
    for Library_Name use "aunit";
    for Library_Kind use "static";
+
+   --------------
+   -- Builder --
+   --------------
+
+   package Builder is
+      case RTS.RTS_Type is
+         when "default" =>
+            for Default_Switches ("Ada") use ("-j0");
+         when others =>
+            for Default_Switches ("Ada") use ("-j0") & RTS.Builder'Default_Switches ("Ada");
+      end case;
+   end Builder;
+
+   --------------
+   -- Naming --
+   --------------
+
+   package Naming is
+      case RTS.RTS_Type is
+         when "default" =>
+            for body ("aunit.time_measure") use "aunit-time_measure__default.adb";
+         when "adalabs" =>
+            for body ("aunit.time_measure") use "aunit-time_measure__adalabs.adb";
+      end case;
+   end Naming;
 
    --------------
    -- Compiler --

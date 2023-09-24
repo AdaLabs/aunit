@@ -101,6 +101,42 @@ package AUnit.Assertions is
    procedure Init_Test (T : in out Test);
    --  Init a new test
 
+   procedure Assert
+     (T         : Test;
+      Condition : Boolean;
+      Message   : String;
+      Source    : String := GNAT.Source_Info.File;
+      Line      : Natural := GNAT.Source_Info.Line);
+   --  Test "Condition" and record "Message" if false.
+   --  If the Ada run-time library supports exception handling, a failed
+   --  condition passed to this routine causes the calling routine to be
+   --  abandoned. Otherwise, a failed assertion returns and continues the
+   --  caller.
+   --  These are primitive operations so that you can override them in your
+   --  own types, possibly to have Source and Line point somewhere else than
+   --  in the code (in the case the test code is automatically generated for
+   --  instance). For such a behavior, it is enough to override the general
+   --  version that takes a Condition parameter.
+
+   function Assert
+     (T         : Test;
+      Condition : Boolean;
+      Message   : String;
+      Source    : String := GNAT.Source_Info.File;
+      Line      : Natural := GNAT.Source_Info.Line) return Boolean;
+   --  Functional version to allow the calling routine to decide whether to
+   --  continue or abandon the execution.
+
+   procedure Assert
+     (T         : Test;
+      Actual    : String;
+      Expected  : String;
+      Message   : String;
+      Source    : String  := GNAT.Source_Info.File;
+      Line      : Natural := GNAT.Source_Info.Line);
+   --  Specialized versions of Assert, they call the general version that
+   --  takes a Condition as a parameter
+
    procedure Clear_Failures (T : Test);
    --  Clear all failures related to T
 

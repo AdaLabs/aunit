@@ -4,7 +4,9 @@ GPRBUILD  = gprbuild
 GPRCLEAN = gprclean
 GPRINSTALL = gprinstall
 
-INSTALL:=$(shell exec=`which gprbuild`;if [ ! -x "$$exec" ]; then unset exec;fi;echo $$exec | sed -e 's/\/bin\/$(GPRBUILD).*//')
+prefix?=$(dir $(shell which gnatls))..
+DESTDIR?=
+INSTALL:=$(DESTDIR)$(prefix)
 
 ifeq ($(RTS),)
    RTS=full
@@ -61,9 +63,27 @@ ifneq (,$(wildcard $(INSTALL)/share/gpr/manifests/aunit))
 	-$(GPRINSTALL) $(GPROPTS) --uninstall --prefix=$(INSTALL) aunit
 endif
 
+install-static:clean
+	gprclean -f -P lib/gnat/aunit.gpr $(GPROPTS) -XLIBRARY_TYPE=static
+	gprbuild -p -P lib/gnat/aunit.gpr $(GPROPTS) -XLIBRARY_TYPE=static
+	mkdir -p $(DESTDIR)$(prefix)/bin
+	gprinstall $(GPROPTS) -f -p -P lib/gnat/aunit.gpr --prefix=$(DESTDIR)$(prefix) --build-name=default  -XLIBRARY_TYPE=static
+
+install-static-rts-adalabs:clean
+	gprclean -f -P lib/gnat/aunit.gpr $(GPROPTS) -XLIBRARY_TYPE=static -XRTS_TYPE=default
+	gprbuild -p -P lib/gnat/aunit.gpr $(GPROPTS) -XLIBRARY_TYPE=static -XRTS_TYPE=adalabs --RTS=adalabs
+	gprinstall $(GPROPTS) -f -p -P lib/gnat/aunit.gpr --prefix=$(DESTDIR)$(prefix) --build-name=rts-adalabs -XLIBRARY_TYPE=static -XRTS_TYPE=adalabs --RTS=adalabs
+	sed -i '1s/^/with \"rts\"\;\n/' $(DESTDIR)$(prefix)/share/gpr/aunit.gpr
+	sed -i 's/case BUILD is/case RTS.RTS_Type is/' $(DESTDIR)$(prefix)/share/gpr/aunit.gpr
+	sed -i 's/type BUILD_KIND is (\"default\", \"rts-adalabs\")\;//' $(DESTDIR)$(prefix)/share/gpr/aunit.gpr
+	sed -i 's/BUILD : BUILD_KIND := external(\"AUNIT_BUILD\", \"default\")\;//' $(DESTDIR)$(prefix)/share/gpr/aunit.gpr
+	sed -i 's/\"rts-adalabs\"/\"adalabs\"/' $(DESTDIR)$(prefix)/share/gpr/aunit.gpr
+
+
 install: install-clean
-	$(GPRINSTALL) $(GPROPTS) -p -f --prefix=$(INSTALL) \
-		--no-build-var lib/gnat/aunit.gpr
+	make install-static
+	make install-static-rts-adalabs
+
 
 .PHONY: doc
 doc:

@@ -41,6 +41,9 @@ package AUnit.Reporter is
      (Engine : in out Reporter;
       Value  : AUnit.IO.File_Access);
 
+   function Get_File
+     (Engine : in  Reporter) return AUnit.IO.File_Access;
+
    procedure Report
      (Engine  : Reporter;
       R       : in out Result'Class;
